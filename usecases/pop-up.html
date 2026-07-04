@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Primary Meta Tags -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maps Deep Discovery System | Custom AI Use Case | LogexAI</title>
+  <meta name="description" content="Find 5x more leads than standard tools. AI-powered system explores every sub-area and provides business intelligence insights. Try our live demo.">
+  <meta name="keywords" content="Google Maps leads, AI lead discovery, business intelligence, local lead generation">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Maps Deep Discovery System | LogexAI">
+  <meta property="og:description" content="From 120 to 500+ leads. See how AI transforms local business discovery.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="../../../assets/css/styles.css">
+
+  <style>
+    /* Popup Overlay */
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .popup-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Popup Container */
+    .popup-container {
+      background: linear-gradient(135deg, rgba(31,35,42,0.95), rgba(43,48,58,0.95));
+      border: 1px solid rgba(164,208,55,0.3);
+      border-radius: 24px;
+      max-width: 480px;
+      width: 90%;
+      padding: 40px 32px;
+      position: relative;
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .popup-overlay.active .popup-container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Success Icon Animation */
+    .popup-icon-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .success-circle {
+      width: 80px;
+      height: 80px;
+      background: rgba(164,208,55,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .success-circle::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid var(--logex-lime);
+      animation: pulseRing 2s ease-out infinite;
+    }
+
+    .checkmark {
+      width: 50px;
+      height: 50px;
+    }
+
+    .checkmark-circle {
+      stroke: var(--logex-lime);
+      stroke-width: 2;
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      animation: strokeCircle 0.6s ease forwards;
+    }
+
+    .checkmark-check {
+      stroke: var(--logex-lime);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: strokeCheck 0.3s 0.6s ease forwards;
+    }
+
+    @keyframes strokeCircle {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes strokeCheck {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    @keyframes pulseRing {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    /* Popup Header */
+    .popup-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .popup-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .popup-subtitle {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* Popup Content */
+    .popup-content {
+      margin-bottom: 28px;
+    }
+
+    .info-card {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+      background: rgba(164,208,55,0.05);
+      border-color: rgba(164,208,55,0.3);
+    }
+
+    .info-icon {
+      font-size: 24px;
+      margin-right: 14px;
+      flex-shrink: 0;
+    }
+
+    .info-text {
+      flex: 1;
+    }
+
+    .info-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 3px;
+      font-weight: 600;
+    }
+
+    .info-value {
+      font-size: 14px;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .timeline-info {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(164,208,55,0.1);
+      border: 1px solid rgba(164,208,55,0.3);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 16px;
+    }
+
+    .timeline-icon {
+      font-size: 20px;
+      margin-right: 10px;
+    }
+
+    .timeline-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .timeline-text .highlight {
+      color: var(--logex-lime);
+      font-weight: 700;
+    }
+
+    /* Popup Footer */
+    .popup-footer {
+      text-align: center;
+    }
+
+    .popup-btn-primary {
+      width: 100%;
+      background: var(--logex-lime);
+      color: var(--logex-dark);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .popup-btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .popup-btn-primary:hover {
+      background: var(--logex-lime-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(164,208,55,0.4);
+    }
+
+    .popup-btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .popup-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.5;
+    }
+
+    /* Close Button */
+    .popup-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .popup-close:hover {
+      background: rgba(255,0,0,0.1);
+      border-color: rgba(255,0,0,0.3);
+      color: #ff6b6b;
+      transform: rotate(90deg);
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .popup-container {
+        padding: 32px 24px;
+      }
+
+      .popup-title {
+        font-size: 20px;
+      }
+
+      .success-circle {
+        width: 70px;
+        height: 70px;
+      }
+
+      .checkmark {
+        width: 44px;
+        height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background -->
+  <div class="gradient-bg"></div>
+  <div class="grid-pattern"></div>
+
+  <!-- Progress Bar -->
+  <div class="fixed top-0 left-0 w-full h-1 bg-gray-900 z-50">
+    <div id="progress-bar" class="h-full" style="background: var(--logex-lime);"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav id="navbar" class="fixed w-full z-40 transition nav-scroll">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a href="/" class="flex items-center">
+            <img src="../../../assets/images/logobig.svg" alt="LogexAI" class="h-12 w-auto">
+          </a>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden lg:flex items-center space-x-8">
+          <a href="/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+          <a href="/#benefits" class="text-gray-300 hover:text-white transition-colors">Why LogexAI</a>
+          <a href="/#services" class="text-gray-300 hover:text-white transition-colors">Services</a>
+
+          <!-- Use Cases Dropdown -->
+          <div class="relative group">
+            <a href="/use-cases" class="text-gray-300 hover:text-white transition-colors flex items-center">
+              Use Cases
+              <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+            <div class="absolute left-0 mt-2 w-64 rounded-xl glass-dark border border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+              <a href="/use-cases/adaptive-rag" class="block px-4 py-3 hover:bg-[rgba(164,208,55,0.1)] transition-colors border-b border-gray-800">
+                <div class="font-semibold text-white">🤖 Adaptive RAG Assistant</div>
+                <div class="text-xs text-gray-400 mt-1">Explore Use Cases</div>
+              </a>
+              <a href="/use-cases/social-mentor" class="block px-4 py-3 hover:bg-[rgba(164,208,55,0.1)] transition-colors border-b border-gray-800">
+                <div class="font-semibold text-white">📱 AI Social Media Mentor</div>
+                <div class="text-xs text-gray-400 mt-1">Social Media Growth Use Cases</div>
+              </a>
+              <a href="/use-cases/custom-systems" class="block px-4 py-3 hover:bg-[rgba(164,208,55,0.1)] transition-colors rounded-b-xl">
+                <div class="font-semibold text-white">⚙️ Custom AI Systems</div>
+                <div class="text-xs text-gray-400 mt-1">AI System Use Cases</div>
+              </a>
+            </div>
+          </div>
+
+          <a href="/#contact" class="btn-primary">Get Started</a>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button id="mobile-menu-btn" class="lg:hidden text-white p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobile-menu" class="hidden lg:hidden glass-dark p-6 space-y-4">
+      <a href="/" class="block hover:text-[var(--logex-lime)]">Home</a>
+      <a href="/#services" class="block hover:text-[var(--logex-lime)]">Services</a>
+      <a href="/use-cases" class="block hover:text-[var(--logex-lime)]">Use Cases</a>
+      <a href="/use-cases/custom-systems" class="block text-[var(--logex-lime)]">Custom Systems</a>
+      <a href="/#contact" class="block btn-primary text-center">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Breadcrumb -->
+  <div class="pt-24 px-4">
+    <div class="max-w-7xl mx-auto">
+      <nav class="flex items-center text-sm text-gray-400">
+        <a href="/" class="hover:text-white transition">Home</a>
+        <span class="mx-2">/</span>
+        <a href="/use-cases" class="hover:text-white transition">Use Cases</a>
+        <span class="mx-2">/</span>
+        <a href="/use-cases/custom-systems" class="hover:text-white transition">Custom Systems</a>
+        <span class="mx-2">/</span>
+        <span class="text-[var(--logex-lime)]">Maps Deep Discovery</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="pt-12 pb-16 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="glass-dark p-12 rounded-3xl text-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background: linear-gradient(135deg, var(--logex-lime), transparent);"></div>
+        <div class="relative z-10">
+          <div class="inline-flex items-center px-4 py-2 rounded-full text-sm mb-6" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">
+            <span class="mr-2">📍</span>
+            AI-POWERED LOCAL DISCOVERY
+          </div>
+
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-jakarta font-bold mb-6 leading-tight">
+            Maps Deep <span class="lime-gradient-text">Discovery System</span>
+          </h1>
+
+          <p class="text-xl md:text-2xl text-gray-400 mb-8 max-w-3xl mx-auto">
+            Find 5x more leads than standard tools. Our AI explores every sub-area, uncovers hidden businesses, and provides complete market intelligence with instant Excel delivery.
+          </p>
+
+          <!-- Key Metrics -->
+          <div class="max-w-3xl mx-auto grid grid-cols-3 gap-6">
+            <div class="glass p-4 rounded-xl">
+              <p class="text-3xl font-bold" style="color: var(--logex-lime);">5x</p>
+              <p class="text-xs text-gray-400">More Leads</p>
+            </div>
+            <div class="glass p-4 rounded-xl">
+              <p class="text-3xl font-bold" style="color: var(--logex-lime);">AI</p>
+              <p class="text-xs text-gray-400">Insights</p>
+            </div>
+            <div class="glass p-4 rounded-xl">
+              <p class="text-3xl font-bold" style="color: var(--logex-lime);">90%</p>
+              <p class="text-xs text-gray-400">Time Saved</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Problem Section -->
+  <section class="py-16 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">
+          <span class="mr-2">🔍</span>
+          THE LIMITATION
+        </div>
+        <h2 class="text-3xl md:text-4xl font-jakarta font-bold mb-4">
+          Standard Tools <span style="color: #ff6b6b;">Miss Opportunities</span>
+        </h2>
+        <p class="text-lg text-gray-400 max-w-3xl mx-auto">
+          Most tools only fetch ~120 results, missing thousands of potential leads in sub-areas and local clusters
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="glass p-6 rounded-2xl border border-red-900/30 reveal">
+          <div class="text-3xl mb-4">⌐</div>
+          <h3 class="text-lg font-bold mb-2" style="color: #ff6b6b;">Limited Coverage</h3>
+          <p class="text-sm text-gray-400">Standard tools cap at ~120 results per search</p>
+        </div>
+        <div class="glass p-6 rounded-2xl border border-red-900/30 reveal">
+          <div class="text-3xl mb-4">🌐</div>
+          <h3 class="text-lg font-bold mb-2" style="color: #ff6b6b;">Missed Sub-Areas</h3>
+          <p class="text-sm text-gray-400">No exploration of neighborhoods and local clusters</p>
+        </div>
+        <div class="glass p-6 rounded-2xl border border-red-900/30 reveal">
+          <div class="text-3xl mb-4">📉</div>
+          <h3 class="text-lg font-bold mb-2" style="color: #ff6b6b;">Raw Data Only</h3>
+          <p class="text-sm text-gray-400">No business intelligence or market insights</p>
+        </div>
+        <div class="glass p-6 rounded-2xl border border-red-900/30 reveal">
+          <div class="text-3xl mb-4">⌐</div>
+          <h3 class="text-lg font-bold mb-2" style="color: #ff6b6b;">Manual Processing</h3>
+          <p class="text-sm text-gray-400">Time-consuming data collection and organization</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Timeline -->
+  <section class="py-16 px-4 bg-gradient-to-b from-transparent via-[rgba(255,0,0,0.02)] to-transparent">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-jakarta font-bold mb-4">
+          Standard Tools vs <span class="lime-gradient-text">Our AI System</span>
+        </h2>
+        <p class="text-lg text-gray-400">See the difference in coverage and intelligence</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Standard Tools -->
+        <div class="glass p-8 rounded-3xl border border-red-900/30">
+          <h3 class="text-xl font-bold mb-6 text-center" style="color: #ff6b6b;">Standard Tools</h3>
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">×</div>
+              <span class="text-gray-300">~120 results maximum</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">×</div>
+              <span class="text-gray-300">Single area search only</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">×</div>
+              <span class="text-gray-300">Basic contact information</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">×</div>
+              <span class="text-gray-300">No business intelligence</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(255,0,0,0.2); color: #ff6b6b;">×</div>
+              <span class="text-gray-300">Manual data processing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Our AI System -->
+        <div class="glass p-8 rounded-3xl border border-[var(--logex-lime)]/30">
+          <h3 class="text-xl font-bold mb-6 text-center text-[var(--logex-lime)]">Our AI System</h3>
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">✓</div>
+              <span class="text-gray-300">500+ results per search</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">✓</div>
+              <span class="text-gray-300">Deep sub-area exploration</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">✓</div>
+              <span class="text-gray-300">Complete business profiles</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">✓</div>
+              <span class="text-gray-300">AI-powered market insights</span>
+            </div>
+            <div class="flex items-center">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">✓</div>
+              <span class="text-gray-300">Instant Excel delivery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The Solution Section -->
+  <section class="py-16 px-4">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">
+          <span class="mr-2">🚀</span>
+          THE SOLUTION
+        </div>
+        <h2 class="text-3xl md:text-4xl font-jakarta font-bold mb-4">
+          Our <span class="lime-gradient-text">AI-Powered Discovery</span>
+        </h2>
+        <p class="text-lg text-gray-400 max-w-3xl mx-auto">
+          Deep exploration system that finds businesses others miss and provides complete market intelligence
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="glass p-6 rounded-2xl reveal card-hover">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-2xl" style="background: rgba(164,208,55,0.2);">
+            🌐
+          </div>
+          <h3 class="text-lg font-bold mb-3 text-[var(--logex-lime)]">Deeper Coverage</h3>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Explores every sub-area systematically</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Finds 5x more businesses</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Complete neighborhood coverage</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="glass p-6 rounded-2xl reveal card-hover">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-2xl" style="background: rgba(164,208,55,0.2);">
+            🤖
+          </div>
+          <h3 class="text-lg font-bold mb-3 text-[var(--logex-lime)]">AI Enrichment</h3>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Verified contact information</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Complete business profiles</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Real-time data validation</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="glass p-6 rounded-2xl reveal card-hover">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-2xl" style="background: rgba(164,208,55,0.2);">
+            📊
+          </div>
+          <h3 class="text-lg font-bold mb-3 text-[var(--logex-lime)]">Market Intelligence</h3>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Digital maturity analysis</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Growth potential scoring</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Market position insights</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="glass p-6 rounded-2xl reveal card-hover">
+          <div class="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-2xl" style="background: rgba(164,208,55,0.2);">
+            ⚡
+          </div>
+          <h3 class="text-lg font-bold mb-3 text-[var(--logex-lime)]">Smart Delivery</h3>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Instant Excel export</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Lead prioritization</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-[var(--logex-lime)] mr-2">✓</span>
+              <span>Structured datasets</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results Section -->
+  <section class="py-16 px-4 bg-gradient-to-b from-transparent via-[rgba(164,208,55,0.02)] to-transparent">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center px-4 py-2 rounded-full text-sm mb-4" style="background: rgba(164,208,55,0.2); color: var(--logex-lime);">
+          <span class="mr-2">📈</span>
+          PROVEN RESULTS
+        </div>
+        <h2 class="text-3xl md:text-4xl font-jakarta font-bold mb-4">
+          Impact & <span class="lime-gradient-text">Transformation</span>
+        </h2>
+      </div>
+
+      <div class="max-w-4xl mx-auto">
+        <div class="glass-dark p-8 rounded-3xl border border-[var(--logex-lime)]/30">
+          <div class="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <p class="text-5xl font-bold mb-2" style="color: var(--logex-lime);">5x</p>
+              <p class="text-lg font-semibold mb-1">More Leads</p>
+              <p class="text-sm text-gray-400">vs standard 120 limit</p>
+            </div>
+            <div>
+              <p class="text-5xl font-bold mb-2" style="color: var(--logex-lime);">90%</p>
+              <p class="text-lg font-semibold mb-1">Time Saved</p>
+              <p class="text-sm text-gray-400">Automated discovery</p>
+            </div>
+            <div>
+              <p class="text-5xl font-bold mb-2" style="color: var(--logex-lime);">AI</p>
+              <p class="text-lg font-semibold mb-1">Intelligence</p>
+              <p class="text-sm text-gray-400">Market insights included</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Try It Now Section -->
+  <section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="glass-dark p-8 rounded-3xl border-2 border-[var(--logex-lime)]/30 relative">
+        <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+          <span class="px-6 py-2 text-sm font-bold rounded-full" style="background: linear-gradient(135deg, var(--logex-lime), var(--logex-lime-dark)); color: var(--logex-dark);">
+            ⚡ LIVE DEMO - TRY NOW
+          </span>
+        </div>
+
+        <div class="text-center mb-8 mt-4">
+          <h2 class="text-3xl font-jakarta font-bold mb-4">
+            Get 500+ Local Business <span class="lime-gradient-text">Leads Instantly</span>
+          </h2>
+          <p class="text-gray-400">
+            Describe your ideal leads and location. Receive a complete Excel sheet with business intelligence sent directly to your email!
+          </p>
+        </div>
+
+        <form id="leadForm" class="space-y-5">
+          <div>
+            <label class="block text-sm font-medium mb-2 text-[var(--logex-lime)]">
+              💬 What leads are you looking for?
+            </label>
+            <textarea
+              name="searchPrompt"
+              required
+              rows="4"
+              placeholder="Example: All restaurants in downtown Manhattan&#10;or&#10;Find me dental clinics in Los Angeles area with 10-50km radius&#10;or&#10;Get all real estate agencies in Dubai Marina and nearby areas"
+              class="w-full bg-white/5 border border-gray-700 rounded-xl px-4 py-3 focus:border-[var(--logex-lime)] focus:outline-none transition resize-vertical"
+            ></textarea>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--logex-lime)]">
+                📧 Your Email (for instant delivery)
+              </label>
+              <input
+                type="email"
+                name="email"
+                required
+                placeholder="your.email@company.com"
+                class="w-full bg-white/5 border border-gray-700 rounded-xl px-4 py-3 focus:border-[var(--logex-lime)] focus:outline-none transition"
+              >
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2 text-[var(--logex-lime)]">
+                📱 Phone Number
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                required
+                placeholder="+1234567890"
+                class="w-full bg-white/5 border border-gray-700 rounded-xl px-4 py-3 focus:border-[var(--logex-lime)] focus:outline-none transition"
+              >
+            </div>
+          </div>
+
+          <button type="submit" class="w-full btn-primary text-lg py-4">
+            ⚡ Get 500+ Leads with AI Insights →
+          </button>
+        </form>
+
+        <div class="mt-6 p-4 rounded-xl" style="background: rgba(164,208,55,0.1); border: 1px solid rgba(164,208,55,0.3);">
+          <p class="text-sm text-gray-300">
+            <span style="color: var(--logex-lime);">⚡ AI-Powered Deep Search:</span> Just describe what you're looking for in natural language. Our AI understands your requirements and explores every sub-area of your selected location, finding 5x more businesses than standard tools with complete business intelligence.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-20 px-4">
+    <div class="max-w-4xl mx-auto">
+      <div class="glass-dark p-12 rounded-3xl text-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-20" style="background: linear-gradient(135deg, var(--logex-lime), transparent);"></div>
+        <div class="relative z-10">
+          <h2 class="text-4xl md:text-5xl font-jakarta font-bold mb-6">
+            Ready to <span class="lime-gradient-text">Scale Your Business?</span>
+          </h2>
+          <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Let's build smart systems that do the work for you—24/7. Free your team from repetitive tasks and focus on growth.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/#contact" class="btn-primary text-lg">
+              Build Your System →
+            </a>
+            <a href="/use-cases/custom-systems" class="btn-secondary text-lg">
+              Explore More Use Cases
+            </a>
+          </div>
+          <div class="mt-8 flex justify-center space-x-6 text-sm text-gray-400">
+            <a href="mailto:hello@logexai.com" class="hover:text-[var(--logex-lime)] transition">
+              📧 hello@logexai.com
+            </a>
+            <a href="https://www.logexai.com" class="hover:text-[var(--logex-lime)] transition">
+              🌐 www.logexai.com
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 px-4 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto text-center">
+      <div class="flex items-center justify-center mb-8">
+        <img src="../../../assets/images/logobig.svg" alt="LogexAI" class="h-10 w-auto md:h-14">
+      </div>
+      <p class="text-gray-400 mb-2 text-lg">WHERE LOGIC MEETS EXECUTION</p>
+      <p class="text-gray-500 mb-6">AI automation that transforms how you work</p>
+      <div class="flex justify-center space-x-6 text-sm text-gray-400 mb-6">
+        <a href="/" class="hover:text-[var(--logex-lime)] transition">Home</a>
+        <a href="/use-cases" class="hover:text-[var(--logex-lime)] transition">All Use Cases</a>
+        <a href="/use-cases/custom-systems" class="hover:text-[var(--logex-lime)] transition">Custom Systems</a>
+      </div>
+      <p class="text-sm text-gray-500">© 2025 LogexAI. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Success Popup -->
+  <div id="successPopup" class="popup-overlay">
+    <div class="popup-container">
+      <!-- Animated Success Icon -->
+      <div class="popup-icon-wrapper">
+        <div class="success-circle">
+          <svg class="checkmark" viewBox="0 0 52 52">
+            <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Popup Header -->
+      <div class="popup-header">
+        <div class="popup-title">Request Submitted Successfully!</div>
+        <div class="popup-subtitle">Your AI-powered lead discovery is in progress</div>
+      </div>
+
+      <!-- Popup Content -->
+      <div class="popup-content">
+        <div class="info-card">
+          <div class="info-icon">⚡</div>
+          <div class="info-text">
+            <div class="info-label">Processing Status</div>
+            <div class="info-value">AI Deep Search Initiated</div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-icon">📧</div>
+          <div class="info-text">
+            <div class="info-label">Delivery Method</div>
+            <div class="info-value">Excel sheet sent to your email</div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="info-icon">📊</div>
+          <div class="info-text">
+            <div class="info-label">Expected Results</div>
+            <div class="info-value">500+ leads with AI insights</div>
+          </div>
+        </div>
+
+        <div class="timeline-info">
+          <div class="timeline-icon">⏱️</div>
+          <div class="timeline-text">
+            Estimated delivery: <span class="highlight">5-10 minutes</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Popup Footer -->
+      <div class="popup-footer">
+        <button onclick="closeSuccessPopup()" class="popup-btn-primary">
+          Got it! →
+        </button>
+        <div class="popup-note">
+          Check your inbox for the complete lead list with business intelligence
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button onclick="closeSuccessPopup()" class="popup-close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="../../../assets/js/main.js"></script>
+
+  <script>
+    // Show Success Popup
+    function showSuccessPopup() {
+      const popup = document.getElementById('successPopup');
+      if (popup) {
+        popup.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+      }
+    }
+
+    // Close Success Popup
+    function closeSuccessPopup() {
+      const popup = document.getElementById('successPopup');
+      if (popup) {
+        popup.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+      }
+    }
+
+    // Close on overlay click
+    document.addEventListener('DOMContentLoaded', () => {
+      const popup = document.getElementById('successPopup');
+      if (popup) {
+        popup.addEventListener('click', (e) => {
+          if (e.target === popup) {
+            closeSuccessPopup();
+          }
+        });
+      }
+
+      // Close on ESC key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeSuccessPopup();
+        }
+      });
+    });
+
+    // Lead Form Submission Handler
+    async function handleLeadFormSubmit(event) {
+      event.preventDefault();
+
+      const form = event.target;
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData);
+      console.log('Form submission data:', data);
+
+      try {
+        const response = await fetch('https://n8n.ai-boostbrands.com/webhook/summarizer', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        console.log('API response:', result);
+        
+        // Show success popup instead of alert
+        showSuccessPopup();
+        
+        // Reset form
+        form.reset();
+      } catch (error) {
+        console.error('Error from API:', error);
+        // Show error message
+        alert('Something went wrong. Please try again or contact us at hello@logexai.com');
+      }
+
+      return false;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const leadForm = document.getElementById('leadForm');
+      if (leadForm) {
+        leadForm.addEventListener('submit', handleLeadFormSubmit);
+      }
+    });
+  </script>
+</body>
+</html>
