@@ -274,6 +274,29 @@
         behavior: 'smooth' 
       });
     }
+    
   </script>
+  <script>
+      window.PairAiWidgetSettings = {
+        position: 'right',
+        type: 'standard',
+        launcherTitle: 'Chat with us!',
+      }
+      ;(function (d, t) {
+        var BASE_URL = 'https://widgets.trypair.ai'
+        var g = d.createElement(t),
+          s = d.getElementsByTagName(t)[0]
+        g.src = BASE_URL + '/sdk.js'
+        g.async = true
+        s.parentNode.insertBefore(g, s)
+        g.onload = function () {
+          window.PairAiWidgetSDK.run({
+            widgetId: '01M07S5APG307N4FVQPFRHAPXK',
+            baseUrl: BASE_URL,
+          })
+        }
+      })(document, 'script')
+    
+</script>
 </body>
 </html>
